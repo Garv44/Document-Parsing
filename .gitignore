@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+*.db
+uploads/
+
+# design mockups (kept locally, not in the repo)
+*.zip
