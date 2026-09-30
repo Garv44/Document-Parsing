@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doc Parse</title>
+<style>
+/* ═════════════════════════════════════════════════════════════════════════
+   Nocturne design system (from "Sift document parser mockups" → Nocturne).
+   Tokens and component classes copied verbatim; app-specific styles follow.
+   ═════════════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-bg: #161826;
+  --color-surface: #232532;
+  --color-text: #e9e9ed;
+  --color-accent: #9184d9;
+  --color-accent-2: #a7a1db;
+  --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+
+  --color-neutral-100: #f3f5fe;
+  --color-neutral-200: #e4e7f5;
+  --color-neutral-300: #cfd3e5;
+  --color-neutral-400: #b2b6ca;
+  --color-neutral-500: #9397ab;
+  --color-neutral-600: #75798c;
+  --color-neutral-700: #595d6c;
+  --color-neutral-800: #3f424d;
+  --color-neutral-900: #292b31;
+
+  --color-accent-100: #f5f4ff;
+  --color-accent-200: #e7e5fe;
+  --color-accent-300: #d2cefd;
+  --color-accent-400: #b5abfc;
+  --color-accent-500: #968ae0;
+  --color-accent-600: #796cbf;
+  --color-accent-700: #5d5294;
+  --color-accent-800: #423a6a;
+  --color-accent-900: #2b2741;
+
+  --font-heading: "Inter", system-ui, sans-serif;
+  --font-heading-weight: 500;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --space-1: 2.8px;
+  --space-2: 5.6px;
+  --space-3: 8.4px;
+  --space-4: 11.2px;
+  --space-6: 16.8px;
+  --space-8: 22.4px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 0 0 1px #3f424d;
+  --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0,0,0,0.55);
+  --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0,0,0,0.65);
+
+  /* App addition: Nocturne is a mono-accent system with no status colours, but a validation
+     tool has to tell errors from warnings. Kept low-chroma and used as lines/text, not floods. */
+  --color-error: #e5928e;
+  --color-error-900: #3a2426;
+  --color-warn: #d9b774;
+  --color-warn-900: #362e1f;
+  --color-ok: #8fcfa8;
+  --color-ok-900: #1f3228;
+}
+
+body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); }
+h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); }
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 400; }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 var(--space-2);
+}
+h1 { font-size: 42px; } h2 { font-size: 32px; } h3 { font-size: 25px; } h4 { font-size: 20px; }
+h5 { font-size: 16px; }
+h6 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+p { margin: 0 0 var(--space-3); }
+a { color: var(--color-accent); text-underline-offset: 3px; }
+a:hover { color: var(--color-accent-300); }
+img { display: block; max-width: 100%; }
+.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; text-decoration: none;
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 14px; line-height: 1.2; color: var(--color-text);
+  background: transparent; border: 1px solid transparent;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border-radius: var(--radius-md);
+}
+.btn svg { display: block; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { color: var(--color-accent); border-color: var(--color-accent); }
+.btn-primary:hover { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+.btn-primary:active { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.btn-secondary { border-color: var(--color-divider); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.btn-icon { width: 36px; height: 36px; padding: 0; }
+
+.field > label {
+  display: block; font-size: 12px; margin-bottom: 5px;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+.input {
+  width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
+  font-size: 14px; color: var(--color-text); caret-color: var(--color-accent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+}
+.input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+.input:disabled { opacity: .75; cursor: default; }
+textarea.input { min-height: 90px; resize: vertical; }
+select.input { appearance: none; padding-right: 28px; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-neutral-400) 50%), linear-gradient(135deg, var(--color-neutral-400) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+.radio input, .seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.seg { display: inline-flex; overflow: hidden; border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
+.seg-opt { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.seg-opt:has(input:checked) { color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); }
+.seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+.card { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface); }
+.card-kicker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); }
+.card-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 17px; line-height: 1.2; }
+.card-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: color-mix(in srgb, var(--color-text) 50%, transparent); }
+
+.tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; letter-spacing: 0.02em; padding: 3px 10px; border-radius: calc(var(--radius-md) * 0.75); white-space: nowrap; }
+.tag-accent { background: var(--color-accent-800); color: var(--color-accent-100); }
+.tag-neutral { background: var(--color-neutral-800); color: var(--color-neutral-100); }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+
+.nav { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--space-4); }
+.nav-brand { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; margin-right: auto; }
+.nav a { color: inherit; text-decoration: none; font-size: 14px; }
+.nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent); }
+
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent); padding: var(--space-2); border-bottom: 1px solid transparent; }
+.table td { padding: var(--space-2); border-bottom: 1px solid transparent; }
+.table thead tr { background: linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px; }
+.table tbody tr { background: linear-gradient(to right, transparent, color-mix(in srgb, var(--color-text) 8%, transparent) 48px, color-mix(in srgb, var(--color-text) 8%, transparent) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px; }
+.table tbody tr:hover { background:
+  linear-gradient(color-mix(in srgb, var(--color-text) 4%, transparent), color-mix(in srgb, var(--color-text) 4%, transparent)) no-repeat 0 0 / 100% 100%,
+  linear-gradient(to right, transparent, color-mix(in srgb, var(--color-text) 8%, transparent) 48px, color-mix(in srgb, var(--color-text) 8%, transparent) calc(100% - 48px), transparent) no-repeat bottom / 100% 1px; }
+
+.dialog-backdrop { position: fixed; inset: 0; display: grid; place-items: center; padding: var(--space-4); background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent); z-index: 20; }
+.dialog { width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-lg); }
+.dialog-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 20px; }
+.dialog-body { font-size: 14px; opacity: 0.85; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   App layout
+   ═════════════════════════════════════════════════════════════════════════ */
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+.shell { min-height: 100vh; display: flex; flex-direction: column;
+  background: radial-gradient(ellipse 900px 500px at 20% -10%, color-mix(in srgb, var(--color-accent-900) 60%, transparent), transparent), var(--color-bg); }
+.nav { padding: 14px 36px; gap: 22px; flex-wrap: wrap; }
+.nav-brand { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.brand-dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--color-accent); box-shadow: 0 0 10px var(--color-accent); }
+.nav-count { font-size: 11px; color: var(--color-accent-300); margin-left: 4px; }
+.fade-rule { height: 1px; margin: 0 36px; background: linear-gradient(90deg, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent); }
+.rule { height: 1px; background: linear-gradient(90deg, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent); }
+.view { display: none; }
+.view.active { display: block; }
+.muted { color: var(--color-neutral-500); }
+.small { font-size: 12px; }
+code { font-family: var(--font-mono); font-size: 12px; color: var(--color-accent-300); }
+
+/* — Parse (upload) — */
+.parse { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 48px; padding: 56px 36px 72px; max-width: 1320px; }
+.parse-main { display: flex; flex-direction: column; gap: 28px; }
+.hero { display: flex; flex-direction: column; gap: 14px; max-width: 560px; }
+.hero h1 { font-size: 46px; line-height: 1.08; letter-spacing: -0.025em; margin: 0; text-wrap: balance; }
+.hero p { font-size: 15px; line-height: 1.55; color: var(--color-neutral-400); margin: 0; text-wrap: pretty; }
+.drop { position: relative; padding: 28px; min-height: 280px; border: 1px dashed var(--color-neutral-700); justify-content: space-between; gap: 24px; }
+.drop-head { display: flex; align-items: center; gap: 14px; }
+.drop-icon { width: 44px; height: 44px; border-radius: var(--radius-md); border: 1px solid var(--color-accent-700); display: grid; place-items: center; color: var(--color-accent); flex: none; }
+.drop-title { font-size: 18px; font-weight: 500; }
+.drop-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.drop-overlay { position: absolute; inset: -1px; border-radius: inherit; border: 1px solid var(--color-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent), 0 0 48px color-mix(in srgb, var(--color-accent) 30%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 70%, transparent); display: grid; place-items: center; pointer-events: none; }
+.drop-overlay span { font-size: 18px; font-weight: 500; color: var(--color-accent-200); }
+.pipeline { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--color-neutral-500); }
+.pipeline span { display: inline-flex; align-items: center; gap: 6px; }
+.pipeline span + span::before { content: ""; width: 14px; height: 1px; background: var(--color-neutral-700); }
+.recent { display: flex; flex-direction: column; gap: 12px; padding-top: 6px; }
+.recent-head { display: flex; align-items: baseline; justify-content: space-between; }
+.run { padding: 12px 14px; gap: 8px; }
+.run-row { display: flex; align-items: center; gap: 10px; }
+.run-name { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-neutral-500); flex-wrap: wrap; }
+.run-meta .spacer { flex: 1; }
+.run-meta a { font-size: 12px; text-decoration: none; }
+.bar { height: 2px; border-radius: 2px; background: var(--color-neutral-800); }
+.bar > div { height: 100%; background: var(--color-accent); box-shadow: 0 0 8px var(--color-accent); border-radius: inherit; transition: width .4s; }
+.stage { font-size: 12px; color: var(--color-accent-300); }
+
+/* — status tags (mono accent + the three status tints) — */
+.tag-err { background: var(--color-error-900); color: var(--color-error); }
+.tag-warn { background: var(--color-warn-900); color: var(--color-warn); }
+.tag-ok { background: var(--color-ok-900); color: var(--color-ok); }
+.tag-progress::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: pulse 1s infinite alternate; }
+@keyframes pulse { from { opacity: .3 } to { opacity: 1 } }
+
+/* — Runs (review) — */
+.runs { display: grid; grid-template-columns: 320px minmax(0, 1fr); height: calc(100vh - 66px); }
+.runs-side { display: flex; flex-direction: column; min-height: 0; padding: 20px 14px 14px 36px; gap: 12px; }
+.run-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.run-item { padding: 10px 12px; border-radius: var(--radius-md); cursor: pointer; border: 1px solid transparent; }
+.run-item:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.run-item.selected { background: var(--color-surface); border-color: var(--color-accent-700); box-shadow: 0 0 14px color-mix(in srgb, var(--color-accent) 12%, transparent); }
+.run-item .meta { font-size: 12px; color: var(--color-neutral-500); margin-top: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.count { font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 999px; }
+.count.error { background: var(--color-error-900); color: var(--color-error); }
+.count.warning { background: var(--color-warn-900); color: var(--color-warn); }
+.detail { min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.empty { margin: auto; max-width: 460px; padding: 24px; }
+.detail-head { padding: 20px 36px 14px 20px; display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.detail-head .title { font-size: 20px; font-weight: 500; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.detail-head .sub { font-size: 12.5px; color: var(--color-neutral-400); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.detail-head .purpose { font-size: 13px; color: var(--color-neutral-500); margin-top: 6px; }
+.detail-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.detail-actions select { width: auto; }
+.detail-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(280px, 42%) minmax(0, 1fr); gap: 0; }
+.preview { background: var(--color-neutral-900); border-radius: var(--radius-md); margin: 0 0 20px 20px; overflow: hidden; box-shadow: var(--shadow-sm); min-height: 0; }
+.preview iframe { width: 100%; height: 100%; border: 0; display: block; }
+.preview .imgwrap { height: 100%; overflow: auto; padding: 12px; }
+.preview img { margin: 0 auto; }
+.panel { overflow-y: auto; padding: 0 36px 40px 20px; display: flex; flex-direction: column; gap: 16px; }
+.panel .card { padding: 16px 18px; gap: 10px; }
+.section-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-500); display: flex; align-items: center; gap: 8px; }
+
+.banner { padding: 10px 14px; border-radius: var(--radius-md); font-size: 13px; border-left: 2px solid var(--color-accent); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+.banner.error { border-color: var(--color-error); background: color-mix(in srgb, var(--color-error) 8%, transparent); }
+.banner.ok { border-color: var(--color-ok); background: color-mix(in srgb, var(--color-ok) 8%, transparent); }
+.banner div { margin-top: 4px; }
+
+.issues { display: flex; flex-direction: column; gap: 4px; }
+.issue { display: flex; gap: 12px; align-items: flex-start; padding: 7px 10px; border-left: 2px solid var(--color-neutral-600); font-size: 13px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.issue[data-field] { cursor: pointer; }
+.issue[data-field]:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.issue .sev { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; min-width: 58px; padding-top: 2px; }
+.issue.error { border-color: var(--color-error); } .issue.error .sev { color: var(--color-error); }
+.issue.warning { border-color: var(--color-warn); } .issue.warning .sev { color: var(--color-warn); }
+.issue.info { border-color: var(--color-accent-600); } .issue.info .sev { color: var(--color-accent-300); }
+.issue .fld { font-family: var(--font-mono); font-size: 11px; color: var(--color-neutral-500); margin-left: 6px; }
+
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px 14px; }
+.fields .field > label { display: flex; align-items: center; gap: 6px; }
+.req { color: var(--color-accent); }
+.conf { font-size: 10.5px; padding: 0 6px; border-radius: 999px; margin-left: auto; }
+.conf.hi { color: var(--color-ok); background: var(--color-ok-900); }
+.conf.mid { color: var(--color-warn); background: var(--color-warn-900); }
+.conf.lo { color: var(--color-error); background: var(--color-error-900); }
+.section-title .conf { margin-left: 0; }
+.flag-error { border-color: var(--color-error) !important; box-shadow: 0 0 0 1px var(--color-error); }
+.flag-warning { border-color: var(--color-warn) !important; }
+.flash { animation: flash 1.2s; }
+@keyframes flash { 0%, 60% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 35%, transparent); } 100% { box-shadow: none; } }
+.table-wrap { overflow-x: auto; }
+.table .input { min-height: 30px; padding: 4px 8px; font-size: 13px; }
+.table td.num .input, .table th.num { text-align: right; }
+.table .narrow { width: 36px; }
+.iconbtn { background: none; border: 0; color: var(--color-neutral-500); cursor: pointer; font-size: 16px; border-radius: var(--radius-sm); }
+.iconbtn:hover { color: var(--color-error); }
+.actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.check { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--color-neutral-400); cursor: pointer; }
+.check input { accent-color: var(--color-accent); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; font-size: 13px; margin: 0; }
+.kv dt { color: var(--color-neutral-500); } .kv dd { margin: 0; }
+pre.json { font-family: var(--font-mono); font-size: 12px; background: var(--color-neutral-900); padding: 12px; border-radius: var(--radius-md); overflow: auto; max-height: 340px; margin: 8px 0 0; color: var(--color-neutral-300); }
+details > summary { cursor: pointer; list-style: none; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+details > summary::-webkit-details-marker { display: none; }
+
+/* — Pages (schemas, POs, exports) — */
+.page { max-width: 1120px; padding: 48px 36px 72px; display: flex; flex-direction: column; gap: 18px; }
+.page-head { max-width: 640px; }
+.page-head h2 { font-size: 32px; margin-bottom: 8px; }
+.page-head p { color: var(--color-neutral-400); font-size: 14px; margin: 0; }
+.type-card { padding: 16px 18px; }
+.type-card .name { font-weight: 500; font-size: 16px; }
+.grid-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px 14px; }
+.mapping { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 8px; }
+.mapping .field { flex: 1; max-width: 320px; }
+
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--color-surface); color: var(--color-text);
+  padding: 10px 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 90vw; z-index: 30; box-shadow: var(--shadow-md); border-left: 2px solid var(--color-accent); }
+.toast.error { border-left-color: var(--color-error); }
+
+@media (max-width: 900px) {
+  .nav, .parse, .page { padding-left: 16px; padding-right: 16px; }
+  .fade-rule { margin: 0 16px; }
+  .parse { grid-template-columns: 1fr; gap: 32px; padding-top: 32px; }
+  .hero h1 { font-size: 34px; }
+  .runs { grid-template-columns: 1fr; height: auto; }
+  .runs-side { padding: 16px; max-height: 42vh; }
+  .detail-head { padding: 16px; }
+  .detail-body { grid-template-columns: 1fr; }
+  .preview { height: 420px; margin: 0 16px 16px; }
+  .panel { padding: 0 16px 32px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="nav">
+    <span class="nav-brand"><span class="brand-dot"></span>Doc Parse</span>
+    <a href="#parse" data-view="parse">Parse</a>
+    <a href="#runs" data-view="runs">Runs<span id="review-count" class="nav-count"></span></a>
+    <a href="#schemas" data-view="schemas">Schemas</a>
+    <a href="#pos" data-view="pos">Purchase orders</a>
+    <a href="#exports" data-view="exports">ERP exports</a>
+    <a class="btn btn-ghost" href="/docs" target="_blank" rel="noopener">API docs</a>
+  </nav>
+  <div class="fade-rule"></div>
+
+  <div id="offline" class="page" hidden>
+    <div class="banner error"><b>The backend isn't reachable.</b>
+      <div>This page was opened as a local file, so it can't talk to the API. From the project folder run
+        <code>uvicorn app.main:app --reload</code> and open <b>http://localhost:8000</b>
+        (or <code>python scripts/demo_server.py</code> → <b>http://localhost:8765</b> for the no-API-key demo).</div></div>
+  </div>
+
+  <!-- ── Parse ─────────────────────────────────────────────────────────── -->
+  <section id="view-parse" class="view">
+    <div class="parse">
+      <div class="parse-main">
+        <div class="hero">
+          <span class="tag tag-accent" style="align-self:flex-start">Claude vision · auto-classify · schema discovery</span>
+          <h1>Turn documents into data you can query.</h1>
+          <p>Drop in invoices, receipts, purchase orders or any other business document. Doc Parse identifies the type,
+            extracts every field and table with a confidence score, checks the numbers, and hands back reviewed
+            records as Markdown, JSON or CSV — or straight into your ERP.</p>
+        </div>
+        <div id="drop" class="card drop">
+          <div class="drop-head">
+            <span class="drop-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></span>
+            <div>
+              <div class="drop-title">Drop files to parse</div>
+              <div id="accepted" class="small muted">PDF, PNG, JPG, WEBP, GIF · 20 MB max</div>
+            </div>
+          </div>
+          <div class="pipeline"><span>Classify</span><span>Schema</span><span>Extract</span><span>Validate</span><span>Review</span></div>
+          <div class="drop-actions">
+            <button class="btn btn-primary" id="btn-browse">Select files</button>
+            <button class="btn btn-ghost" id="btn-sample">Try a sample</button>
+            <span style="flex:1"></span>
+            <span class="small muted">Output</span>
+            <div class="seg" id="format-seg">
+              <label class="seg-opt"><input type="radio" name="fmt" value="Markdown" checked><span>Markdown</span></label>
+              <label class="seg-opt"><input type="radio" name="fmt" value="JSON"><span>JSON</span></label>
+              <label class="seg-opt"><input type="radio" name="fmt" value="CSV"><span>CSV</span></label>
+            </div>
+          </div>
+          <div id="drop-overlay" class="drop-overlay" hidden><span>Release to parse</span></div>
+          <input id="file-input" type="file" multiple hidden>
+        </div>
+      </div>
+      <aside class="recent">
+        <div class="recent-head">
+          <span style="font-size:14px;font-weight:500">Recent runs</span>
+          <span id="recent-count" class="small muted">0 documents</span>
+        </div>
+        <div class="rule"></div>
+        <div id="recent-list" style="display:flex;flex-direction:column;gap:12px"></div>
+        <a href="#runs" class="small" id="all-runs" hidden>All runs →</a>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ── Runs (review) ─────────────────────────────────────────────────── -->
+  <section id="view-runs" class="view">
+    <div class="runs">
+      <aside class="runs-side">
+        <select id="status-filter" class="input">
+          <option value="">All statuses</option>
+          <option value="needs_review">Needs review</option>
+          <option value="validated">Validated</option>
+          <option value="approved">Approved (held, not exported)</option>
+          <option value="exported">Exported</option>
+          <option value="failed">Failed</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <ul id="run-list" class="run-list"></ul>
+      </aside>
+      <section id="detail" class="detail">
+        <div class="empty">
+          <h4>Select a run</h4>
+          <p class="muted" style="font-size:14px">Pick a document on the left to review its extracted fields, checks and ERP status — or
+            <a href="#parse">parse a new one</a>.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ── Schemas ───────────────────────────────────────────────────────── -->
+  <section id="view-schemas" class="view">
+    <div class="page">
+      <div class="page-head">
+        <h2>Schemas</h2>
+        <p>Built-in types have specialised schemas, validation and ERP mappings. Discovered types were identified and given a
+          schema by Claude; their approved records are held until you configure an ERP mapping.</p>
+      </div>
+      <div id="type-list" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </section>
+
+  <!-- ── Purchase orders ───────────────────────────────────────────────── -->
+  <section id="view-pos" class="view">
+    <div class="page">
+      <div class="page-head">
+        <h2>Purchase orders</h2>
+        <p>Invoices that reference a PO number are matched against these. Approved PO documents are added automatically.</p>
+      </div>
+      <form id="po-form" class="card" style="padding:18px;gap:12px">
+        <div class="grid-form">
+          <div class="field"><label>PO number</label><input class="input" name="po_number" required></div>
+          <div class="field"><label>Vendor</label><input class="input" name="vendor_name" required></div>
+          <div class="field"><label>Currency</label><input class="input" name="currency" placeholder="USD" maxlength="3"></div>
+          <div class="field"><label>Order date</label><input class="input" name="order_date" type="date"></div>
+          <div class="field"><label>Total</label><input class="input" name="total_amount" inputmode="decimal"></div>
+        </div>
+        <div class="field"><label>Line items — one per line: description | quantity | unit price | sku (optional)</label>
+          <textarea class="input" name="lines" rows="3" placeholder="Steel bolts M8 | 500 | 0.12 | BLT-M8"></textarea></div>
+        <div class="actions"><button class="btn btn-primary" type="submit">Add PO</button></div>
+      </form>
+      <div class="table-wrap"><table class="table" id="po-table"></table></div>
+    </div>
+  </section>
+
+  <!-- ── ERP exports ───────────────────────────────────────────────────── -->
+  <section id="view-exports" class="view">
+    <div class="page">
+      <div class="page-head">
+        <h2>ERP exports</h2>
+        <p>Every record sent to the ERP (or to the built-in mock ERP when no webhook is configured).</p>
+      </div>
+      <div id="export-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script>
+"use strict";
+
+// ─────────────────────────────────────────────────────────────── constants + state
+const IN_PROGRESS = ["queued", "classifying", "designing_schema", "extracting", "validating"];
+const STAGE = { queued: [6, "Queued"], classifying: [22, "Classifying"], designing_schema: [42, "Designing schema"],
+  extracting: [66, "Extracting"], validating: [90, "Validating"] };
+const STATUS_LABEL = {
+  queued: "Queued", classifying: "Classifying", designing_schema: "Designing schema", extracting: "Extracting",
+  validating: "Validating", needs_review: "Needs review", validated: "Validated", approved: "Approved",
+  exported: "Exported", rejected: "Rejected", failed: "Failed",
+};
+const STATUS_TAG = { needs_review: "tag-warn", validated: "tag-ok", approved: "tag-accent", exported: "tag-ok",
+  rejected: "tag-neutral", failed: "tag-err" };
+const SOURCE_LABEL = { built_in: "built-in schema", generated: "new schema designed", reused: "discovered schema reused" };
+const ERP_STATUS_LABEL = { exported: "Exported to ERP", awaiting_configuration: "Held — no ERP mapping for this type yet",
+  export_failed: "ERP delivery failed" };
+const NUMERIC_TYPES = new Set(["number", "integer"]);
+const FILE_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-400)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg>';
+
+const state = { view: "parse", jobs: [], selectedId: null, detail: null, dirty: false, types: [], fmt: "Markdown" };
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+// ─────────────────────────────────────────────────────────────── helpers
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const money = (v, cur) => v == null ? "—" : `${cur ? cur + " " : ""}${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const sizeLabel = (b) => b == null ? "" : b >= 1e6 ? (b / 1e6).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1e3)) + " KB";
+const ext = (name) => (name.includes(".") ? name.split(".").pop() : "").toUpperCase();
+const ago = (iso) => {
+  const s = (Date.now() - new Date(iso.endsWith("Z") || iso.includes("+") ? iso : iso + "Z")) / 1000;
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+};
+const statusTag = (status) => IN_PROGRESS.includes(status)
+  ? `<span class="tag tag-accent tag-progress">${esc(STATUS_LABEL[status])}</span>`
+  : `<span class="tag ${STATUS_TAG[status] || "tag-neutral"}">${esc(STATUS_LABEL[status] || status)}</span>`;
+const kindTag = (kind) => kind ? `<span class="tag ${kind === "built_in" ? "tag-neutral" : "tag-outline"}">${kind === "built_in" ? "built-in" : "discovered"}</span>` : "";
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { headers: opts.body && !(opts.body instanceof FormData) ? { "Content-Type": "application/json" } : {}, ...opts });
+  if (!res.ok) {
+    let msg = res.statusText;
+    try { const j = await res.json(); msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch {}
+    throw new Error(msg);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+let toastTimer;
+function toast(msg, isError = false) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.className = "toast" + (isError ? " error" : "");
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.hidden = true), isError ? 6000 : 3500);
+}
+
+// ─────────────────────────────────────────────────────────────── routing (#parse, #runs/<id>, #schemas, #pos, #exports)
+function route() {
+  const [view, id] = (location.hash.slice(1) || "parse").split("/");
+  const name = ["parse", "runs", "schemas", "pos", "exports"].includes(view) ? view : "parse";
+  state.view = name;
+  $$(".view").forEach((v) => v.classList.toggle("active", v.id === "view-" + name));
+  $$(".nav a[data-view]").forEach((a) => a.dataset.view === name ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  if (name === "runs" && id && id !== state.selectedId) selectJob(id);
+  if (name === "schemas") loadTypes();
+  if (name === "pos") loadPOs();
+  if (name === "exports") loadExports();
+}
+window.addEventListener("hashchange", route);
+
+// ─────────────────────────────────────────────────────────────── parse view: upload
+const drop = $("#drop");
+drop.addEventListener("dragover", (e) => { e.preventDefault(); $("#drop-overlay").hidden = false; });
+drop.addEventListener("dragleave", (e) => { if (!drop.contains(e.relatedTarget)) $("#drop-overlay").hidden = true; });
+drop.addEventListener("drop", (e) => { e.preventDefault(); $("#drop-overlay").hidden = true; uploadFiles(e.dataTransfer.files); });
+$("#btn-browse").addEventListener("click", () => $("#file-input").click());
+$("#file-input").addEventListener("change", (e) => { uploadFiles(e.target.files); e.target.value = ""; });
+$("#btn-sample").addEventListener("click", async () => {
+  try {
+    const r = await api("/api/samples", { method: "POST" });
+    toast(`Queued ${r.length} sample document${r.length === 1 ? "" : "s"}`);
+    await refreshJobs();
+  } catch (e) { toast(e.message, true); }
+});
+$$('#format-seg input').forEach((r) => r.addEventListener("change", () => { state.fmt = r.value; renderRecent(); }));
+
+async function uploadFiles(files) {
+  let n = 0;
+  for (const f of files) {
+    const fd = new FormData();
+    fd.append("file", f);
+    try { await api("/api/documents", { method: "POST", body: fd }); n++; }
+    catch (e) { toast(`${f.name}: ${e.message}`, true); }
+  }
+  if (n) toast(`Parsing ${n} document${n === 1 ? "" : "s"}…`);
+  await refreshJobs();
+}
+
+async function loadConfig() {
+  try {
+    const c = await api("/api/config");
+    const exts = c.accepted_extensions.filter((e) => e !== ".jpeg").map((e) => e.slice(1).toUpperCase());
+    $("#accepted").textContent = `${exts.join(", ")} · ${c.max_upload_mb} MB max`;
+    $("#file-input").accept = c.accepted_extensions.join(",");
+  } catch {}
+}
+
+// ─────────────────────────────────────────────────────────────── polling + lists
+async function refreshJobs() {
+  try { state.jobs = await api("/api/jobs?limit=200"); } catch { return; }
+  renderRecent();
+  renderRunList();
+  const review = state.jobs.filter((j) => j.status === "needs_review").length;
+  $("#review-count").textContent = review ? review : "";
+}
+
+function renderRecent() {
+  const jobs = state.jobs.slice(0, 6);
+  $("#recent-count").textContent = `${state.jobs.length} document${state.jobs.length === 1 ? "" : "s"}`;
+  $("#all-runs").hidden = state.jobs.length <= 6;
+  if (!jobs.length) {
+    $("#recent-list").innerHTML = `<p class="small muted">No runs yet. Drop a file or try a sample.</p>`;
+    return;
+  }
+  $("#recent-list").innerHTML = jobs.map((j) => {
+    const busy = IN_PROGRESS.includes(j.status);
+    const [pct, stage] = STAGE[j.status] || [100, ""];
+    const right = busy ? `<span class="stage">${esc(stage)}…</span>`
+      : j.field_count != null ? `<span class="tag tag-accent">${j.field_count} fields</span>` : statusTag(j.status);
+    return `<div class="card run">
+      <div class="run-row">${FILE_ICON}<span class="run-name" title="${esc(j.filename)}">${esc(j.filename)}</span>${right}</div>
+      <div class="run-meta">
+        <span>${esc(ext(j.filename))}</span>${j.file_size != null ? `<span>·</span><span>${sizeLabel(j.file_size)}</span>` : ""}
+        ${j.doc_type_name ? `<span>·</span><span>${esc(j.doc_type_name)}</span>` : ""}
+        <span class="spacer"></span>
+        ${!busy ? statusTag(j.status) : ""}
+        ${!busy && j.field_count ? `<a href="#" data-dl="${j.id}">${esc(state.fmt)}</a>` : ""}
+        ${!busy ? `<a href="#runs/${j.id}">Open</a>` : ""}
+      </div>
+      ${busy ? `<div class="bar"><div style="width:${pct}%"></div></div>` : ""}
+    </div>`;
+  }).join("");
+  $$("[data-dl]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); download(a.dataset.dl); }));
+}
+
+$("#status-filter").addEventListener("change", renderRunList);
+
+function renderRunList() {
+  const f = $("#status-filter").value;
+  const jobs = f ? state.jobs.filter((j) => j.status === f) : state.jobs;
+  const ul = $("#run-list");
+  if (!jobs.length) { ul.innerHTML = `<li class="small muted" style="padding:8px">No runs.</li>`; return; }
+  ul.innerHTML = jobs.map((j) => {
+    const c = j.issue_counts || {};
+    return `<li class="run-item ${j.id === state.selectedId ? "selected" : ""}" data-id="${j.id}">
+      <div class="run-row"><span class="run-name" title="${esc(j.filename)}">${esc(j.filename)}</span>${statusTag(j.status)}</div>
+      <div class="meta">
+        <span>${esc(j.doc_type_name || "—")}</span>
+        ${j.party ? `<span>${esc(j.party)}</span>` : ""}
+        ${j.total_amount != null ? `<span>${esc(money(j.total_amount, j.currency))}</span>` : ""}
+        <span style="margin-left:auto">${c.error ? `<span class="count error">${c.error}</span> ` : ""}${c.warning ? `<span class="count warning">${c.warning}</span>` : ""}</span>
+      </div></li>`;
+  }).join("");
+  $$(".run-item", ul).forEach((li) => li.addEventListener("click", () => { location.hash = "runs/" + li.dataset.id; }));
+}
+
+async function poll() {
+  await refreshJobs();
+  const sel = state.jobs.find((j) => j.id === state.selectedId);
+  if (sel && state.detail && !state.dirty && (sel.status !== state.detail.status || sel.updated_at !== state.detail.updated_at)) {
+    await loadDetail(sel.id);
+  }
+  setTimeout(poll, state.jobs.some((j) => IN_PROGRESS.includes(j.status)) ? 1500 : 5000);
+}
+
+// ─────────────────────────────────────────────────────────────── downloads (Markdown / JSON / CSV)
+function toMarkdown(d) {
+  const cell = (v) => String(v ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+  const conf = d.field_confidence || {};
+  const out = [`# ${d.filename}`, "", `**Type:** ${d.doc_type_name || d.doc_type} · **Status:** ${STATUS_LABEL[d.status] || d.status}`, ""];
+  const scalars = d.schema.filter((s) => s.type !== "table");
+  out.push("| Field | Value |" + (d.field_confidence ? " Confidence |" : ""), "|---|---|" + (d.field_confidence ? "---|" : ""));
+  for (const s of scalars) out.push(`| ${cell(s.label)} | ${cell(d.data[s.key])} |` + (d.field_confidence ? ` ${conf[s.key] != null ? Math.round(conf[s.key] * 100) + "%" : ""} |` : ""));
+  for (const t of d.schema.filter((s) => s.type === "table")) {
+    out.push("", `## ${t.label}`, "", "| " + t.columns.map((c) => cell(c.label)).join(" | ") + " |", "|" + t.columns.map(() => "---").join("|") + "|");
+    for (const row of d.data[t.key] || []) out.push("| " + t.columns.map((c) => cell(row[c.key])).join(" | ") + " |");
+  }
+  return out.join("\n") + "\n";
+}
+function toCSV(d) {
+  const q = (v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const lines = ["field,value"];
+  for (const s of d.schema.filter((s) => s.type !== "table")) lines.push(`${q(s.key)},${q(d.data[s.key])}`);
+  for (const t of d.schema.filter((s) => s.type === "table")) {
+    lines.push("", q(t.key), t.columns.map((c) => q(c.key)).join(","));
+    for (const row of d.data[t.key] || []) lines.push(t.columns.map((c) => q(row[c.key])).join(","));
+  }
+  return lines.join("\n") + "\n";
+}
+async function download(id) {
+  try {
+    const d = await api(`/api/jobs/${id}`);
+    if (!d.data || !d.schema) throw new Error("Nothing extracted yet");
+    const base = d.filename.replace(/\.[^.]+$/, "");
+    const [body, type, extn] = state.fmt === "JSON"
+      ? [JSON.stringify({ document_type: { id: d.doc_type, name: d.doc_type_name }, status: d.status, data: d.data,
+          field_confidence: d.field_confidence, issues: d.issues }, null, 2), "application/json", "json"]
+      : state.fmt === "CSV" ? [toCSV(d), "text/csv", "csv"] : [toMarkdown(d), "text/markdown", "md"];
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([body], { type })), download: `${base}.${extn}` });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } catch (e) { toast(e.message, true); }
+}
+
+// ─────────────────────────────────────────────────────────────── review detail
+async function selectJob(id) {
+  if (state.dirty && id !== state.selectedId && !confirm("Discard unsaved corrections?")) {
+    location.hash = "runs/" + state.selectedId;
+    return;
+  }
+  state.selectedId = id;
+  state.dirty = false;
+  renderRunList();
+  await loadDetail(id);
+}
+
+async function loadDetail(id) {
+  try { [state.detail, state.types] = await Promise.all([api(`/api/jobs/${id}`), api("/api/doc-types")]); }
+  catch (e) { toast(e.message, true); return; }
+  renderDetail();
+}
+
+function reprocessControls(d) {
+  const opts = state.types.map((t) => `<option value="${esc(t.id)}">as ${esc(t.label)}${t.kind === "discovered" ? " (discovered)" : ""}</option>`).join("");
+  return `<select id="reprocess-type" class="input"><option value="">auto-classify</option>${opts}<option value="__new__">as a new type…</option></select>
+    ${d.type_kind === "discovered" ? `<label class="check" title="Design a fresh schema instead of reusing the stored one"><input type="checkbox" id="regen"> new schema</label>` : ""}
+    <button class="btn btn-secondary" id="btn-reprocess">Reprocess</button>`;
+}
+
+function renderDetail() {
+  const d = state.detail;
+  const busy = IN_PROGRESS.includes(d.status);
+  const cls = d.classification;
+  const reviewable = ["needs_review", "validated"].includes(d.status) && d.data && d.schema;
+  const errors = (d.issues || []).filter((i) => i.severity === "error").length;
+  const canReprocess = !busy && !["approved", "exported"].includes(d.status);
+
+  $("#detail").innerHTML = `
+    <div class="detail-head">
+      <div style="min-width:0">
+        <div class="title">${esc(d.filename)}</div>
+        <div class="sub">
+          ${statusTag(d.status)}
+          ${d.doc_type ? `<b style="color:var(--color-text);font-weight:500">${esc(d.doc_type_name || d.doc_type)}</b> ${kindTag(d.type_kind)}` : ""}
+          ${d.schema_source ? `<span>${esc(SOURCE_LABEL[d.schema_source])}</span>` : ""}
+          ${cls && !cls.forced ? `<span>· classified ${Math.round(cls.confidence * 100)}%</span>` : ""}
+          ${d.doc_type_forced ? "<span>· type set by reviewer</span>" : ""}
+          ${d.corrected ? "<span>· human-corrected</span>" : ""}
+        </div>
+        ${d.doc_type_purpose ? `<div class="purpose">${esc(d.doc_type_purpose)}</div>` : ""}
+      </div>
+      <div class="detail-actions">
+        ${d.data && d.schema ? `<button class="btn btn-ghost" id="btn-download">Download ${esc(state.fmt)}</button>` : ""}
+        ${canReprocess ? reprocessControls(d) : ""}
+        ${reviewable || d.status === "failed" ? `<button class="btn btn-secondary" id="btn-reject">Reject</button>` : ""}
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="preview">${d.media_type === "application/pdf"
+        ? `<iframe src="/api/jobs/${d.id}/file#view=FitH" title="document preview"></iframe>`
+        : `<div class="imgwrap"><img src="/api/jobs/${d.id}/file" alt="document preview"></div>`}</div>
+      <div class="panel">
+        ${busy ? `<div class="banner">${esc(STATUS_LABEL[d.status])}… this page updates automatically.<div class="bar" style="margin-top:8px"><div style="width:${STAGE[d.status][0]}%"></div></div></div>` : ""}
+        ${d.status === "failed" ? `<div class="banner error"><b>Processing failed:</b> ${esc(d.error)}</div>` : ""}
+        ${d.record ? renderRecordBanner(d) : ""}
+        ${renderIssues(d.issues)}
+        ${d.data && d.schema ? renderForm(d, reviewable) : ""}
+        ${d.po_match ? renderPOMatch(d.po_match) : ""}
+        ${reviewable ? renderApproveCard(d, errors) : ""}
+        ${d.llm_usage ? `<details class="small muted"><summary>LLM usage</summary><pre class="json">${esc(JSON.stringify(d.llm_usage, null, 2))}</pre></details>` : ""}
+      </div>
+    </div>`;
+  wireDetail(d);
+}
+
+function renderRecordBanner(d) {
+  const st = d.record.erp_status;
+  const cls = st === "exported" ? "ok" : st === "export_failed" ? "error" : "";
+  const canExport = d.status === "approved" && d.erp_record_type;
+  return `<div class="banner ${cls}"><b>${esc(ERP_STATUS_LABEL[st] || st)}</b>${d.approved_at ? ` · approved ${ago(d.approved_at)}` : ""} · record #${d.record.id}
+    ${st === "awaiting_configuration" && !d.erp_record_type ? `<div>The reviewed data is stored. Configure an ERP mapping for <b>${esc(d.doc_type_name)}</b> on the <a href="#schemas">Schemas</a> page to export it.</div>` : ""}
+    ${canExport ? `<div class="actions" style="margin-top:10px"><button class="btn btn-primary" id="btn-export">Export to ERP as ${esc(d.erp_record_type)}</button></div>` : ""}
+  </div>`;
+}
+
+function renderApproveCard(d, errors) {
+  const route = d.erp_record_type;
+  return `<div class="card">
+    <div class="small muted">${route
+      ? `Approving exports this document to the ERP as <code>${esc(route)}</code>.`
+      : `No ERP mapping exists for <b style="color:var(--color-text)">${esc(d.doc_type_name)}</b>. Approving stores it as a reviewed record; it is not sent to the ERP until a mapping is configured.`}</div>
+    <div class="actions">
+      <button class="btn btn-secondary" id="btn-save">Save &amp; re-validate</button>
+      <button class="btn btn-primary" id="btn-approve">${route ? "Approve → ERP" : "Approve &amp; store record"}</button>
+      ${errors ? `<label class="check"><input type="checkbox" id="override"> Override ${errors} error${errors > 1 ? "s" : ""}</label>` : ""}
+    </div>
+  </div>`;
+}
+
+function renderIssues(issues) {
+  if (!issues || !issues.length) return "";
+  const order = { error: 0, warning: 1, info: 2 };
+  const sorted = [...issues].sort((a, b) => order[a.severity] - order[b.severity]);
+  return `<div class="card"><div class="section-title">Checks</div><div class="issues">${sorted.map((i) => `
+    <div class="issue ${i.severity}" ${i.field ? `data-field="${esc(i.field)}"` : ""}>
+      <span class="sev">${i.severity}</span><span>${esc(i.message)}${i.field ? `<span class="fld">${esc(i.field)}</span>` : ""}</span>
+    </div>`).join("")}</div></div>`;
+}
+
+function confPill(c) {
+  if (c == null) return "";
+  return `<span class="conf ${c >= 0.9 ? "hi" : c >= 0.7 ? "mid" : "lo"}" title="Model confidence">${Math.round(c * 100)}%</span>`;
+}
+
+function inputFor(path, type, value, dis) {
+  if (type === "boolean") {
+    const v = value === true ? "true" : value === false ? "false" : "";
+    return `<select class="input" data-path="${esc(path)}" data-type="boolean" ${dis}>
+      <option value="" ${v === "" ? "selected" : ""}>—</option><option value="true" ${v === "true" ? "selected" : ""}>Yes</option><option value="false" ${v === "false" ? "selected" : ""}>No</option></select>`;
+  }
+  const attrs = NUMERIC_TYPES.has(type) ? 'inputmode="decimal"' : type === "date" ? 'placeholder="YYYY-MM-DD"' : "";
+  return `<input class="input" data-path="${esc(path)}" data-type="${esc(type)}" value="${esc(value ?? "")}" ${attrs} ${dis}>`;
+}
+
+function renderForm(d, editable) {
+  const dis = editable ? "" : "disabled";
+  const conf = d.field_confidence || {};
+  const scalars = d.schema.filter((s) => s.type !== "table");
+  const fields = scalars.map((s) => `
+    <div class="field" title="${esc(s.description || "")}">
+      <label>${esc(s.label)}${s.required ? ' <span class="req">*</span>' : ""} ${confPill(conf[s.key])}</label>
+      ${inputFor(s.key, s.type, d.data[s.key], dis)}
+    </div>`).join("");
+  const tables = d.schema.filter((s) => s.type === "table").map((t) => `
+    <div class="card"><div class="section-title">${esc(t.label)} ${confPill(conf[t.key])}</div>
+      <div class="table-wrap"><table class="table" data-table="${esc(t.key)}">
+        <thead><tr>${t.columns.map((c) => `<th class="${NUMERIC_TYPES.has(c.type) ? "num" : ""}">${esc(c.label)}</th>`).join("")}<th class="narrow"></th></tr></thead>
+        <tbody>${(d.data[t.key] || []).map((row, i) => tableRow(t, row, i, dis)).join("")}</tbody>
+      </table></div>
+      ${editable ? `<button class="btn btn-ghost add-row" data-table="${esc(t.key)}" style="align-self:flex-start">+ Add row</button>` : ""}
+    </div>`).join("");
+  return `<div class="card"><div class="section-title">${d.type_kind === "discovered" ? "Extracted fields · discovered schema" : "Extracted fields"}</div>
+      <div class="fields">${fields || '<span class="small muted">No scalar fields in this schema.</span>'}</div></div>${tables}`;
+}
+
+function tableRow(t, row, i, dis = "") {
+  return `<tr>${t.columns.map((c) => `<td class="${NUMERIC_TYPES.has(c.type) ? "num" : ""}">${inputFor(`${t.key}[${i}].${c.key}`, c.type, row[c.key], dis)}</td>`).join("")}
+    <td class="narrow">${dis ? "" : `<button class="iconbtn del-row" title="Remove row">×</button>`}</td></tr>`;
+}
+
+function renderPOMatch(m) {
+  const title = { no_po: "No PO referenced", not_found: "PO not found", matched: "Matched", partial: "Partial match", mismatch: "Mismatch" }[m.status] || m.status;
+  const tag = m.status === "matched" ? "tag-ok" : m.status === "mismatch" ? "tag-err" : "tag-warn";
+  const lines = (m.lines || []).map((l) => `<tr><td>${l.invoice_line + 1}</td><td>${esc(l.description)}</td><td>${esc(l.po_description || "—")}</td>
+    <td><span class="tag ${l.status === "matched" ? "tag-ok" : l.status === "mismatch" ? "tag-err" : "tag-warn"}">${esc(l.status)}</span></td></tr>`).join("");
+  return `<div class="card"><div class="section-title">Purchase order match</div>
+    <dl class="kv"><dt>Status</dt><dd><span class="tag ${tag}">${esc(title)}</span></dd>
+      ${m.po_number ? `<dt>PO number</dt><dd>${esc(m.po_number)}</dd>` : ""}
+      ${m.po_total != null ? `<dt>PO total</dt><dd>${esc(money(m.po_total))}</dd>` : ""}
+      ${m.vendor_similarity != null ? `<dt>Vendor similarity</dt><dd>${Math.round(m.vendor_similarity * 100)}%</dd>` : ""}</dl>
+    ${lines ? `<div class="table-wrap"><table class="table"><thead><tr><th>#</th><th>Invoice line</th><th>PO line</th><th></th></tr></thead><tbody>${lines}</tbody></table></div>` : ""}
+  </div>`;
+}
+
+const findInput = (path) => document.querySelector(`[data-path="${CSS.escape(path)}"]`) || document.querySelector(`[data-path^="${CSS.escape(path)}"]`);
+
+function wireDetail(d) {
+  for (const i of d.issues || []) {
+    if (!i.field || i.severity === "info") continue;
+    const el = findInput(i.field);
+    if (el) { el.classList.add("flag-" + i.severity); el.title = i.message; }
+  }
+  const panel = $("#detail");
+  $$("[data-path]", panel).forEach((el) => ["input", "change"].forEach((ev) => el.addEventListener(ev, () => (state.dirty = true))));
+  $$(".issue[data-field]", panel).forEach((el) => el.addEventListener("click", () => {
+    const input = findInput(el.dataset.field);
+    if (input) { input.scrollIntoView({ block: "center", behavior: "smooth" }); input.focus(); input.classList.add("flash"); }
+  }));
+  const wireDelete = (root) => $$(".del-row", root).forEach((b) => b.addEventListener("click", () => { b.closest("tr").remove(); state.dirty = true; }));
+  wireDelete(panel);
+  $$(".add-row", panel).forEach((b) => b.addEventListener("click", () => {
+    const spec = d.schema.find((s) => s.key === b.dataset.table);
+    const tbody = panel.querySelector(`table[data-table="${CSS.escape(spec.key)}"] tbody`);
+    tbody.insertAdjacentHTML("beforeend", tableRow(spec, {}, tbody.children.length));
+    wireDelete(tbody.lastElementChild);
+    state.dirty = true;
+  }));
+  $("#btn-save")?.addEventListener("click", () => save());
+  $("#btn-approve")?.addEventListener("click", approve);
+  $("#btn-export")?.addEventListener("click", exportHeld);
+  $("#btn-reject")?.addEventListener("click", reject);
+  $("#btn-reprocess")?.addEventListener("click", reprocess);
+  $("#btn-download")?.addEventListener("click", () => download(d.id));
+}
+
+function toValue(type, raw, label) {
+  const v = String(raw).trim();
+  if (v === "") return null;
+  if (type === "boolean") return v === "true";
+  if (NUMERIC_TYPES.has(type)) {
+    const n = Number(v.replace(/,/g, ""));
+    if (Number.isNaN(n)) throw new Error(`"${v}" is not a number (${label})`);
+    return n;
+  }
+  return v;
+}
+
+function collectData() {
+  const d = state.detail;
+  const data = structuredClone(d.data); // keeps keys the form doesn't show (e.g. low_confidence_fields)
+  for (const s of d.schema) {
+    if (s.type === "table") {
+      data[s.key] = $$(`table[data-table="${CSS.escape(s.key)}"] tbody tr`).map((tr) => {
+        const row = {};
+        $$("[data-path]", tr).forEach((el) => { const col = el.dataset.path.split(".").pop(); row[col] = toValue(el.dataset.type, el.value, `${s.label} · ${col}`); });
+        return row;
+      }).filter((row) => Object.values(row).some((v) => v !== null));
+      if (s.key === "line_items") data[s.key].forEach((r) => { r.description = r.description || ""; });
+    } else {
+      const el = document.querySelector(`[data-path="${CSS.escape(s.key)}"]`);
+      if (el) data[s.key] = toValue(s.type, el.value, s.label);
+    }
+  }
+  return data;
+}
+
+async function save(quiet = false) {
+  let data;
+  try { data = collectData(); } catch (e) { toast(e.message, true); return false; }
+  try {
+    state.detail = await api(`/api/jobs/${state.detail.id}/data`, { method: "PUT", body: JSON.stringify({ data }) });
+    state.dirty = false;
+    renderDetail();
+    refreshJobs();
+    if (!quiet) toast("Saved and re-validated");
+    return true;
+  } catch (e) { toast(e.message, true); return false; }
+}
+
+async function approve() {
+  if (state.dirty && !(await save(true))) return;
+  const override = $("#override")?.checked || false;
+  try {
+    const r = await api(`/api/jobs/${state.detail.id}/approve`, { method: "POST", body: JSON.stringify({ override_errors: override }) });
+    if (r.erp_status === "exported") toast(`Approved and exported to ${r.target}`);
+    else if (r.erp_status === "awaiting_configuration") toast("Approved and stored as a reviewed record (no ERP mapping for this type)");
+    else toast(`Approved, but ERP delivery failed: ${r.erp_response || "unknown error"}`, true);
+    await loadDetail(state.detail.id);
+    refreshJobs();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function exportHeld() {
+  try {
+    const r = await api(`/api/jobs/${state.detail.id}/export`, { method: "POST" });
+    toast(`Exported to ${r.target}`);
+    await loadDetail(state.detail.id);
+    refreshJobs();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function reject() {
+  if (!confirm("Reject this document? It will not be stored as a record or exported.")) return;
+  try {
+    await api(`/api/jobs/${state.detail.id}/reject`, { method: "POST" });
+    state.dirty = false;
+    await loadDetail(state.detail.id);
+    refreshJobs();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function reprocess() {
+  if (state.dirty && !confirm("Reprocessing discards your unsaved corrections. Continue?")) return;
+  let doc_type = $("#reprocess-type").value || null;
+  let display_name = null;
+  if (doc_type === "__new__") {
+    display_name = prompt("Name of the document type (e.g. Bill of lading):");
+    if (!display_name || !display_name.trim()) return;
+    doc_type = display_name;
+  }
+  const regenerate_schema = $("#regen")?.checked || false;
+  try {
+    await api(`/api/jobs/${state.detail.id}/reprocess`, { method: "POST", body: JSON.stringify({ doc_type, display_name, regenerate_schema }) });
+    state.dirty = false;
+    await loadDetail(state.detail.id);
+    refreshJobs();
+  } catch (e) { toast(e.message, true); }
+}
+
+// ─────────────────────────────────────────────────────────────── schemas (document types)
+async function loadTypes() {
+  let types;
+  try { types = await api("/api/doc-types"); } catch (e) { toast(e.message, true); return; }
+  $("#type-list").innerHTML = types.map((t) => `
+    <details class="card type-card">
+      <summary>
+        <span class="name">${esc(t.label)}</span> ${kindTag(t.kind)} <code>${esc(t.id)}</code>
+        <span class="small muted">${t.field_count} fields · ${t.job_count} document${t.job_count === 1 ? "" : "s"}</span>
+        <span style="margin-left:auto;display:flex;gap:6px">${t.erp_record_type
+          ? `<span class="tag tag-ok">ERP → ${esc(t.erp_record_type)}</span>` : `<span class="tag tag-warn">no ERP mapping</span>`}
+          ${t.records_awaiting_configuration ? `<span class="tag tag-accent">${t.records_awaiting_configuration} held</span>` : ""}</span>
+      </summary>
+      ${t.purpose ? `<p class="small muted" style="margin:10px 0 0">${esc(t.purpose)}</p>` : ""}
+      ${t.kind === "discovered" ? `
+        <form class="mapping" data-slug="${esc(t.id)}">
+          <div class="field"><label>ERP record type</label><input class="input" name="erp_record_type" value="${esc(t.erp_record_type || "")}" placeholder="e.g. inbound_shipment"></div>
+          <button class="btn btn-primary" type="submit">${t.erp_record_type ? "Update mapping" : "Configure mapping"}</button>
+          ${t.erp_record_type ? `<button class="btn btn-secondary" type="button" data-clear="${esc(t.id)}">Remove mapping</button>` : ""}
+        </form>` : `<p class="small muted" style="margin:8px 0 0">Built-in type: specialised schema, validation rules and ERP mapping are defined in code.</p>`}
+      <div class="table-wrap" style="margin-top:10px"><table class="table">
+        <thead><tr><th>Key</th><th>Label</th><th>Type</th><th>Role</th><th>Req.</th></tr></thead>
+        <tbody>${t.schema.map((s) => `<tr><td><code>${esc(s.key)}</code></td><td>${esc(s.label)}${s.type === "table" ? `<div class="small muted">${s.columns.map((c) => esc(c.key)).join(", ")}</div>` : ""}</td>
+          <td>${esc(s.type)}</td><td>${s.role !== "none" ? esc(s.role) : ""}</td><td>${s.required ? "✓" : ""}</td></tr>`).join("")}</tbody>
+      </table></div>
+    </details>`).join("");
+  $$(".mapping").forEach((f) => f.addEventListener("submit", (e) => { e.preventDefault(); setMapping(f.dataset.slug, new FormData(f).get("erp_record_type")); }));
+  $$("[data-clear]").forEach((b) => b.addEventListener("click", () => setMapping(b.dataset.clear, null)));
+}
+
+async function setMapping(slug, recordType) {
+  try {
+    const t = await api(`/api/doc-types/${encodeURIComponent(slug)}`, { method: "PUT", body: JSON.stringify({ erp_record_type: recordType || null }) });
+    toast(t.erp_record_type ? `${t.label} now exports as ${t.erp_record_type}. Held records can be exported from each run.` : `ERP mapping removed for ${t.label}`);
+    loadTypes();
+  } catch (e) { toast(e.message, true); }
+}
+
+// ─────────────────────────────────────────────────────────────── purchase orders
+async function loadPOs() {
+  let pos;
+  try { pos = await api("/api/purchase-orders"); } catch (e) { toast(e.message, true); return; }
+  $("#po-table").innerHTML = pos.length ? `
+    <thead><tr><th>PO number</th><th>Vendor</th><th>Date</th><th class="num">Total</th><th>Lines</th><th>Source</th><th></th></tr></thead>
+    <tbody>${pos.map((p) => `<tr><td><b style="font-weight:500">${esc(p.po_number)}</b></td><td>${esc(p.vendor_name)}</td><td>${esc(p.order_date || "—")}</td>
+      <td style="text-align:right">${esc(money(p.total_amount, p.currency))}</td><td>${p.line_items.length}</td>
+      <td><span class="tag tag-neutral">${esc(p.source)}</span></td>
+      <td class="narrow"><button class="iconbtn" data-del="${p.id}" title="Delete">×</button></td></tr>`).join("")}</tbody>`
+    : `<tbody><tr><td class="muted">No purchase orders yet.</td></tr></tbody>`;
+  $$("[data-del]").forEach((b) => b.addEventListener("click", async () => {
+    if (!confirm("Delete this PO?")) return;
+    await api(`/api/purchase-orders/${b.dataset.del}`, { method: "DELETE" });
+    loadPOs();
+  }));
+}
+
+$("#po-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const f = new FormData(ev.target);
+  const num = (v) => (v === "" || v == null ? null : Number(String(v).replace(/,/g, "")));
+  const lines = String(f.get("lines") || "").split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
+    const [description, qty, price, sku] = l.split("|").map((x) => x?.trim());
+    const quantity = num(qty), unit_price = num(price);
+    return { description, quantity, unit_price, sku: sku || null,
+      amount: quantity != null && unit_price != null ? Math.round(quantity * unit_price * 100) / 100 : null };
+  });
+  const body = { po_number: f.get("po_number").trim(), vendor_name: f.get("vendor_name").trim(),
+    currency: (f.get("currency") || "").trim().toUpperCase() || null, order_date: f.get("order_date") || null,
+    total_amount: num(f.get("total_amount")), line_items: lines };
+  try {
+    await api("/api/purchase-orders", { method: "POST", body: JSON.stringify(body) });
+    ev.target.reset();
+    toast(`PO ${body.po_number} added`);
+    loadPOs();
+  } catch (e) { toast(e.message, true); }
+});
+
+// ─────────────────────────────────────────────────────────────── ERP exports
+async function loadExports() {
+  let rows;
+  try { rows = await api("/api/erp/exports"); } catch (e) { toast(e.message, true); return; }
+  $("#export-list").innerHTML = rows.length ? rows.map((e) => {
+    const p = e.payload;
+    const title = p.document_type ? `${p.document_type.name} · ${p.external_id.slice(0, 8)}`
+      : `${p.document_number || ""} · ${p.party?.name || ""} · ${money(p.total_amount, p.currency)}`;
+    return `<details class="card" style="padding:14px 16px">
+      <summary><span class="tag ${e.success ? "tag-ok" : "tag-err"}">${e.success ? "delivered" : "failed"}</span>
+        <code>${esc(p.record_type)}</code> <span>${esc(title)}</span>
+        <span class="small muted" style="margin-left:auto">${esc(e.target)} · ${ago(e.created_at)}</span></summary>
+      <pre class="json">${esc(JSON.stringify(p, null, 2))}</pre>
+    </details>`;
+  }).join("") : `<p class="muted">Nothing exported yet.</p>`;
+}
+
+// ─────────────────────────────────────────────────────────────── boot
+window.addEventListener("beforeunload", (e) => { if (state.dirty) e.preventDefault(); });
+
+if (location.protocol === "file:") {
+  $("#offline").hidden = false;
+  $$(".view").forEach((v) => v.classList.remove("active"));
+  $("#view-parse").classList.add("active");
+  $$(".nav a[data-view='parse']").forEach((a) => a.setAttribute("aria-current", "page"));
+  renderRecent();
+} else {
+  loadConfig();
+  route();
+  poll();
+}
+</script>
+</body>
+</html>
