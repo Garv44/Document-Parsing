@@ -14,7 +14,7 @@ def _bool(name: str, default: bool) -> bool:
 
 
 # Postgres in production, e.g. postgresql+asyncpg://user:pass@localhost:5432/docparse
-# Falls back to a local SQLite file so the app runs with zero setup.
+# Falls back to a local SQLite file so the app runs with zero setup. 
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{BASE_DIR / 'docparse.db'}")
 
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", BASE_DIR / "uploads"))
